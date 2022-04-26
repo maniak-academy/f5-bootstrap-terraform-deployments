@@ -1,9 +1,3 @@
-/*
-Copyright 2019 F5 Networks Inc.
-This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
-If a copy of the MPL was not distributed with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
- */
-
 terraform {
   required_providers {
     bigip = {
@@ -31,7 +25,6 @@ resource "null_resource" "install_do" {
 
 resource "time_sleep" "wait_30_seconds" {
   depends_on = [null_resource.install_do]
-
   create_duration = "15s"
 }
 
