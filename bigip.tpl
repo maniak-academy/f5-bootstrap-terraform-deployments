@@ -97,7 +97,7 @@
         "httpdSettings": {
             "class": "HTTPD",
             "allow": [
-                "192.168.1.0/24"
+                "192.168.86.0/24"
             ],
             "authPamIdleTimeout": 86400,
             "maxClients": 10,

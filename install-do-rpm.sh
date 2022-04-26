@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 set -e
 
@@ -12,14 +12,13 @@ if [ -z "$2" ]; then
     exit 0
 fi
 
-if [ -z "$3" ]; then
-    echo "File path to RPM is required for installation."
-    exit 0
-fi
+echo "Downloading DO rpm "
+curl -s https://api.github.com/repos/F5Networks/f5-declarative-onboarding/releases/latest | grep "f.*rpm" | sed -n 2p | cut -d : -f 2,3 | tr -d \" | wget -qi -
 
 TARGET="$1"
 CREDS="$2"
-TARGET_RPM="$3"
+GET_RPM_NAME=`curl -s https://api.github.com/repos/F5Networks/f5-declarative-onboarding/releases/latest | grep "f.*rpm" | sed -n 1p | cut -d : -f 2 | tr -d \",`
+TARGET_RPM="$GET_RPM_NAME"
 RPM_NAME=$(basename $TARGET_RPM)
 CURL_FLAGS="--silent --write-out \n --insecure -u $CREDS"
 
@@ -37,22 +36,14 @@ poll_task () {
     done
 }
 
-#Get list of existing f5-appsvcs packages on target
+#Get list of existing f5-declarative packages on target
 TASK=$(curl $CURL_FLAGS -H "Content-Type: application/json" \
     -X POST https://$TARGET/mgmt/shared/iapp/package-management-tasks -d "{operation: 'QUERY'}")
 poll_task $(echo $TASK | jq -r .id)
-AS3RPMS=$(echo $RESULT | jq -r '.queryResponse[].packageName | select(. | startswith("f5-appsvcs"))')
+DORPMS=$(echo $RESULT | jq -r '.queryResponse[].packageName | select(. | startswith("f5-decalrative"))')
 
-#Uninstall existing f5-appsvcs packages on target
-for PKG in $AS3RPMS; do
-    echo "Uninstalling $PKG on $TARGET"
-    DATA="{\"operation\":\"UNINSTALL\",\"packageName\":\"$PKG\"}"
-    TASK=$(curl ${CURL_FLAGS} "https://$TARGET/mgmt/shared/iapp/package-management-tasks" \
-        --data $DATA -H "Origin: https://$TARGET" -H "Content-Type: application/json;charset=UTF-8")
-    poll_task $(echo $TASK | jq -r .id)
-done
 
-#Upload new f5-appsvcs RPM to target
+#Upload new f5-declarative RPM to target
 echo "Uploading RPM to https://$TARGET/mgmt/shared/file-transfer/uploads/$RPM_NAME"
 LEN=$(wc -c $TARGET_RPM | awk 'NR==1{print $1}')
 RANGE_SIZE=5000000
@@ -71,7 +62,7 @@ for i in $(seq 0 $CHUNKS); do
         -H "Connection: keep-alive"
 done
 
-#Install f5-appsvcs on target
+#Install f5-declardeclartive rpm on target
 echo "Installing $RPM_NAME on $TARGET"
 DATA="{\"operation\":\"INSTALL\",\"packageFilePath\":\"/var/config/rest/downloads/$RPM_NAME\"}"
 TASK=$(curl ${CURL_FLAGS} "https://$TARGET/mgmt/shared/iapp/package-management-tasks" \
@@ -80,7 +71,7 @@ poll_task $(echo $TASK | jq -r .id)
 
 echo "Waiting for /info endpoint to be available"
 until curl ${CURL_FLAGS} -o /dev/null --write-out "" --fail --silent \
-    "https://$TARGET/mgmt/shared/appsvcs/info"; do
+    "https://$TARGET/mgmt/shared/declarative-onboarding/info"; do
     sleep 1
 done
 
