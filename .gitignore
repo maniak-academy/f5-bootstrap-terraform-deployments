@@ -8,7 +8,7 @@
 #f5 files
 f5-declarative-onboarding-*
 f5-*
-
+.terraform.lock.hcl
 # Crash log files
 crash.log
 

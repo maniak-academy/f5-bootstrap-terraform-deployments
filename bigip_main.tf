@@ -25,7 +25,7 @@ resource "null_resource" "install_do" {
 
 resource "time_sleep" "wait_30_seconds" {
   depends_on = [null_resource.install_do]
-  create_duration = "15s"
+  create_duration = "20s"
 }
 
 
