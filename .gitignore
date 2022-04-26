@@ -5,6 +5,10 @@
 *.tfstate
 *.tfstate.*
 
+#f5 files
+f5-declarative-onboarding-*
+f5-*
+
 # Crash log files
 crash.log
 
